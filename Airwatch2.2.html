@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AirWatch</title>
+
+<style>
+
+body{
+margin:0;
+font-family:sans-serif;
+background:#020617;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.app{
+width:380px;
+padding:25px;
+border-radius:25px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+text-align:center;
+}
+
+.aqi{
+font-size:70px;
+font-weight:bold;
+margin:10px;
+}
+
+.levels{
+margin-top:20px;
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+.level{
+padding:10px;
+border-radius:10px;
+background:rgba(255,255,255,0.08);
+text-align:left;
+transition:0.4s;
+}
+
+.active{
+outline:2px solid white;
+transform:scale(1.03);
+}
+
+button{
+margin-top:15px;
+padding:10px 15px;
+border:none;
+border-radius:12px;
+background:white;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<div>🌍 AirWatch</div>
+
+<div id="aqi" class="aqi">--</div>
+
+<div id="levels" class="levels"></div>
+
+<button onclick="getAir()">Refresh AQI</button>
+
+</div>
+
+<script>
+
+let categories=[
+{min:0,max:50,name:"🟢 Ajër i mirë",color:"#22c55e",tips:"Ajër i pastër"},
+{min:51,max:100,name:"🟡 Mesatar",color:"#facc15",tips:"Kujdes personat sensitiv"},
+{min:101,max:150,name:"🟠 Grupe sensitive",color:"#fb923c",tips:"Kufizo aktivitetet"},
+{min:151,max:200,name:"🔴 I dëmshëm",color:"#ef4444",tips:"Qëndro brenda"},
+{min:201,max:300,name:"🟣 Shumë i rrezikshëm",color:"#a855f7",tips:"Mos dil jashtë"},
+{min:301,max:999,name:"⚫ Ekstrem",color:"#ffffff",tips:"Rrezik serioz"}
+];
+
+function renderLevels(activeAQI){
+
+let container=document.getElementById("levels");
+container.innerHTML="";
+
+categories.forEach(cat=>{
+
+let div=document.createElement("div");
+div.className="level";
+
+if(activeAQI>=cat.min && activeAQI<=cat.max){
+div.classList.add("active");
+document.body.style.background=cat.color;
+}
+
+div.innerHTML=`<b>${cat.name}</b><br>${cat.tips}`;
+container.appendChild(div);
+
+});
+
+}
+
+function updateUI(aqi){
+
+document.getElementById("aqi").innerText=Math.round(aqi);
+renderLevels(aqi);
+
+}
+
+async function getAir(){
+
+navigator.geolocation.getCurrentPosition(async pos=>{
+
+let lat=pos.coords.latitude;
+let lon=pos.coords.longitude;
+
+let url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi`;
+
+let res=await fetch(url);
+let data=await res.json();
+
+updateUI(data.current.european_aqi);
+
+});
+
+}
+
+getAir();
+
+</script>
+
+</body>
+</html>
